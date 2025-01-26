@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import './bootstrap.css'
 import './bootstrap.js'
 import img1 from '../public/aerial_view_of_ocean_hd_beach.jpg'
@@ -15,13 +15,15 @@ const App = () => {
   const [images, setImages]=useState([img1, img2, img3, img4, img5, img6]);
   const [marginLeft, setMarginLeft]=useState(0);
   const [imgNum, setImgNum]=useState(0);
+  const rightBtn=useRef()
+  const [imgW, setImgW]=useState()
 
-  const left=()=>{
+  const left=()=>{                // To scroll the carousel left.
     let imgs=document.querySelectorAll("img")[0];
     let imgWidth = window.getComputedStyle(imgs).width;
     imgWidth=imgWidth.slice(0, -2);
     imgWidth=parseFloat(imgWidth)
-    console.log("imgWidth = ", imgWidth)
+    setImgW(imgWidth)
     if(imgNum>0 && imgNum<images.length)
     {
       setMarginLeft((prev)=>prev+imgWidth);
@@ -34,12 +36,12 @@ const App = () => {
     }
   }
 
-  const right=()=>{
+  const right=()=>{             // To scroll the carousel right.
     let imgs=document.querySelectorAll("img")[0];
     let imgWidth = window.getComputedStyle(imgs).width;
     imgWidth=imgWidth.slice(0, -2);
     imgWidth=parseFloat(imgWidth)
-    console.log("imgWidth = ", imgWidth)
+    setImgW(imgWidth)
     if(imgNum>=0 && imgNum<images.length-1)
     {
       setMarginLeft((prev)=>prev-imgWidth);
@@ -52,12 +54,20 @@ const App = () => {
     }
   }
 
-  window.addEventListener("resize", ()=>{
-    let imgs=document.querySelectorAll("img")[0];
+  window.onload = ()=>{
+    let imgs=document.querySelectorAll("img")[0];       // correctly when window is resized.
     let imgWidth = window.getComputedStyle(imgs).width;
     imgWidth=imgWidth.slice(0, -2);
     imgWidth=parseFloat(imgWidth)
-    console.log("imgWidth = ", imgWidth)
+    setImgW(imgWidth)
+  }
+
+  window.addEventListener("resize", ()=>{               // To set the position of image 
+    let imgs=document.querySelectorAll("img")[0];       // correctly when window is resized.
+    let imgWidth = window.getComputedStyle(imgs).width;
+    imgWidth=imgWidth.slice(0, -2);
+    imgWidth=parseFloat(imgWidth)
+    setImgW(imgWidth)
 
     if(imgNum==0)
     {
@@ -66,37 +76,64 @@ const App = () => {
     else{
       //marginLeft=-(imgWidth*imgNum);
       setMarginLeft((prev)=>(-imgWidth*imgNum))
-      console.log("marginLeft = ", marginLeft)
     }
   })
 
-  useEffect(()=>{
+  useEffect(()=>{       // When marginLeft state changes then the image changes.
     let imgs=document.querySelectorAll("img")[0];
-    console.log("marginLeft = ", marginLeft)
-    console.log("ImgNum = " , imgNum)
     imgs.style="transition:0.5s; margin-left:"+marginLeft+"px;";
+
+    const interval = setInterval(()=>{
+      rightBtn.current.click();
+    }, 3000)
+
+    let dots = document.querySelectorAll(".dots span");
+    dots[0].style.backgroundColor="blue";
+
+    for(let a=0; a<dots.length; a++)
+    {
+      if(a==imgNum)
+      {
+        dots[a].style.backgroundColor="black";
+      }
+      else{
+        dots[a].style.backgroundColor="white";
+      }
+    }
+
+    return ()=> clearInterval(interval);
   }, [marginLeft])
 
   return (
     <div>
       <h3 className='text-center'>Carousel</h3>
 
-      <div className='w-75 mx-auto my-4 d-flex justify-content-between bg-light rounded-2' style={{height:"40vw"}}>
-        <div className='d-flex align-items-center' style={{}}> 
-          <FaAngleLeft className='fs-1 d-inline-block' style={{}} onClick={()=>{left()}}/>
+      <div className='w-75 mx-auto my-4 d-flex justify-content-between bg-light rounded-2' style={{height:"40vw"}}> {/* Carousel container */}
+        <div className='d-flex align-items-center' style={{}}>  {/* Left button */}
+          <button className='border-0' onClick={()=>{left()}}><FaAngleLeft className='fs-1 d-inline-block' style={{}} /></button>
         </div>
 
-        <div className='d-flex overflow-hidden' style={{height:"40vw", width:"100%"}}>
+        <div className='d-flex overflow-hidden' style={{height:"40vw", width:"100%", position:"relative"}}>
           {
-            images.map((image, index)=>{
+            images.map((image, index)=>{    // Displaying images.
               return (
                 <img key={index} src={image} className='w-100 img' style={{height:"40vw"}}></img>
               )
             })
           }
+
+          <div className='d-flex py-3 justify-content-center dots' style={{gap:"14px", position:"absolute", zIndex:"3", width:imgW, bottom:"0"}}>
+            <span className='rounded-5 ' style={{width:"10px", height:"10px"}}></span>
+            <span className='rounded-5 ' style={{width:"10px", height:"10px"}}></span>
+            <span className='rounded-5 ' style={{width:"10px", height:"10px"}}></span>
+            <span className='rounded-5 ' style={{width:"10px", height:"10px"}}></span>
+            <span className='rounded-5 ' style={{width:"10px", height:"10px"}}></span>
+            <span className='rounded-5 ' style={{width:"10px", height:"10px"}}></span>
+          </div>
         </div>
 
-        <div className='d-flex align-items-center' style={{}}> <FaAngleRight onClick={()=>right()} className='float-end fs-1 d-inline-block' style={{}}/> </div>
+        {/* Right button */}
+        <div className='d-flex align-items-center' style={{}}> <button className='border-0' onClick={()=>right()} ref={rightBtn}><FaAngleRight className='float-end fs-1 d-inline-block' style={{}}/></button> </div>
       </div>
     </div>
   )
